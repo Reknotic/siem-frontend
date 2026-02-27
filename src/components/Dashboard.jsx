@@ -648,53 +648,41 @@ const fetchData = useCallback(async () => {
     }
   };
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async (isAutoRefresh = false) => {
   try {
     const res = await fetch("https://hussain-2003-siem-backend-v2.hf.space/training-history");
     const data = await res.json();
     setTrainingHistory(data);
 
-    const active = data.find(h => h.is_active);
-    
     if (data && data.length > 0) {
-      const latest = active || data[0]; // Priority to active model, else latest
-      const formattedAcc = `${(latest.accuracy * 100).toFixed(2)}%`;
+      const active = data.find(h => h.is_active) || data[0];
+      const formattedAcc = `${(active.accuracy * 100).toFixed(2)}%`;
       
-      setStats(prev => ({
-        ...prev,
-        ai_accuracy: formattedAcc
-      }));
+      setStats(prev => ({ ...prev, ai_accuracy: formattedAcc }));
 
-      setTrainingStatus({
-        status: "complete",
-        accuracy: formattedAcc,
-        matrix_url: latest.confusion_matrix,
-        error: null
-      });
-
-      // ✅ FIX: Check for Base64 (data:) OR full URLs (http)
-      let finalPath;
-      if (latest.confusion_matrix.startsWith('data:') || latest.confusion_matrix.startsWith('http')) {
-        finalPath = latest.confusion_matrix;
-      } else {
-        finalPath = `https://hussain-2003-siem-backend-v2.hf.space${latest.confusion_matrix}`;
+      // ONLY overwrite the matrix display if:
+      // 1. It's a fresh page load (not an auto-refresh) OR 
+      // 2. We don't have a matrix showing yet
+      if (!isAutoRefresh || !matrixUrl) {
+        const finalPath = active.confusion_matrix.startsWith('data:') || active.confusion_matrix.startsWith('http')
+          ? active.confusion_matrix
+          : `https://hussain-2003-siem-backend-v2.hf.space${active.confusion_matrix}`;
+          
+        setMatrixUrl(finalPath);
+        setSelectedFeatures(active.top_features || []);
       }
-        
-      setMatrixUrl(finalPath);
-      setSelectedFeatures(latest.top_features || []);
     }
   } catch (e) { 
     console.error("History Fetch Error:", e); 
   }
-}, [setMatrixUrl, setStats]);
+}, [matrixUrl, setMatrixUrl, setStats]); // matrixUrl added to dependencies
 
 useEffect(() => {
-    fetchHistory();
+    fetchHistory(false); // Initial load
     
-    // Optional: Refresh history every 30 seconds
-    const interval = setInterval(fetchHistory, 30000);
+    const interval = setInterval(() => fetchHistory(true), 30000); // Auto-refresh
     return () => clearInterval(interval);
-  }, [fetchHistory]);
+}, [fetchHistory]);
 
   // Add this inside your Dashboard function
 useEffect(() => {
