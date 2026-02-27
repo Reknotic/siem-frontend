@@ -655,22 +655,16 @@ const fetchData = useCallback(async () => {
     setTrainingHistory(data);
 
     const active = data.find(h => h.is_active);
-    if (active) {
-        setMatrixUrl(active.confusion_matrix);
-        setSelectedFeatures(active.top_features || []);
-    }
-
+    
     if (data && data.length > 0) {
-      const latest = data[0];
+      const latest = active || data[0]; // Priority to active model, else latest
       const formattedAcc = `${(latest.accuracy * 100).toFixed(2)}%`;
       
-      // Update the 'stats' object so the yellow 2xl text stays persistent
       setStats(prev => ({
         ...prev,
         ai_accuracy: formattedAcc
       }));
 
-      // Updates your training status states
       setTrainingStatus({
         status: "complete",
         accuracy: formattedAcc,
@@ -678,16 +672,21 @@ const fetchData = useCallback(async () => {
         error: null
       });
 
-      const fullMatrixPath = latest.confusion_matrix.startsWith('http') 
-        ? latest.confusion_matrix 
-        : `https://hussain-2003-siem-backend-v2.hf.space${latest.confusion_matrix}`;
+      // ✅ FIX: Check for Base64 (data:) OR full URLs (http)
+      let finalPath;
+      if (latest.confusion_matrix.startsWith('data:') || latest.confusion_matrix.startsWith('http')) {
+        finalPath = latest.confusion_matrix;
+      } else {
+        finalPath = `https://hussain-2003-siem-backend-v2.hf.space${latest.confusion_matrix}`;
+      }
         
-      setMatrixUrl(fullMatrixPath);
+      setMatrixUrl(finalPath);
+      setSelectedFeatures(latest.top_features || []);
     }
   } catch (e) { 
     console.error("History Fetch Error:", e); 
   }
-}, [setMatrixUrl, setStats]); // Added setStats to the dependencies
+}, [setMatrixUrl, setStats]);
 
 useEffect(() => {
     fetchHistory();
