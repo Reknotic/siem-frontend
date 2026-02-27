@@ -654,6 +654,12 @@ const fetchData = useCallback(async () => {
     const data = await res.json();
     setTrainingHistory(data);
 
+    const active = data.find(h => h.is_active);
+    if (active) {
+        setMatrixUrl(active.confusion_matrix);
+        setSelectedFeatures(active.top_features || []);
+    }
+
     if (data && data.length > 0) {
       const latest = data[0];
       const formattedAcc = `${(latest.accuracy * 100).toFixed(2)}%`;
@@ -1389,11 +1395,14 @@ const handleEngineChange = (e) => {
                     <div className="flex justify-center p-8 bg-[#020617]">
                       {matrixUrl ? (
                         <img 
-                          src={matrixUrl.startsWith('http') ? matrixUrl : `https://hussain-2003-siem-backend-v2.hf.space${matrixUrl}`} 
+                          src={
+                            matrixUrl.startsWith('data:') || matrixUrl.startsWith('http') 
+                              ? matrixUrl 
+                              : `https://hussain-2003-siem-backend-v2.hf.space${matrixUrl}`
+                          } 
                           alt="Performance Matrix" 
                           className="max-h-80 rounded border border-slate-800 shadow-2xl" 
                           onError={(e) => {
-                            // If the image fails to load, we hide it to prevent a broken icon
                             e.target.style.display = 'none';
                           }}
                         />
