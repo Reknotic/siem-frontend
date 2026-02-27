@@ -291,6 +291,8 @@ const Dashboard = ({ onLogout }) => {
   const [trainingHistory, setTrainingHistory] = useState([]);
   const [trainingStatus, setTrainingStatus] = useState({ status: 'idle', accuracy: 'N/A', matrix_url: null, error: null });
 
+  const [isManualView, setIsManualView] = useState(false);
+
   const [selectedEngine, setSelectedEngine] = useState(
   localStorage.getItem('activeEngine') || "xgboost"
 );
@@ -656,14 +658,13 @@ const fetchData = useCallback(async () => {
 
     if (data && data.length > 0) {
       const active = data.find(h => h.is_active) || data[0];
-      const formattedAcc = `${(active.accuracy * 100).toFixed(2)}%`;
       
+      // Update stats (Accuracy) ALWAYS so the yellow text stays current
+      const formattedAcc = `${(active.accuracy * 100).toFixed(2)}%`;
       setStats(prev => ({ ...prev, ai_accuracy: formattedAcc }));
 
-      // ONLY overwrite the matrix display if:
-      // 1. It's a fresh page load (not an auto-refresh) OR 
-      // 2. We don't have a matrix showing yet
-      if (!isAutoRefresh || !matrixUrl) {
+      // ONLY update the image if we aren't "Locked" into a Recall view
+      if (!isManualView) {
         const finalPath = active.confusion_matrix.startsWith('data:') || active.confusion_matrix.startsWith('http')
           ? active.confusion_matrix
           : `https://hussain-2003-siem-backend-v2.hf.space${active.confusion_matrix}`;
@@ -672,10 +673,8 @@ const fetchData = useCallback(async () => {
         setSelectedFeatures(active.top_features || []);
       }
     }
-  } catch (e) { 
-    console.error("History Fetch Error:", e); 
-  }
-}, [matrixUrl, setMatrixUrl, setStats]); // matrixUrl added to dependencies
+  } catch (e) { console.error(e); }
+}, [isManualView, setMatrixUrl, setStats]);
 
 useEffect(() => {
     fetchHistory(false); // Initial load
@@ -1492,6 +1491,7 @@ const handleEngineChange = (e) => {
                           <td className="p-4 text-right">
                             <button 
                               onClick={() => {
+                                setIsManualView(true);
                                 setMatrixUrl(log.confusion_matrix);
                                 setSelectedFeatures(log.top_features || []); // Set the features for the selected model
                               }}
