@@ -1,0 +1,22 @@
+/* App.css */
+body {
+  margin: 0;
+  background-color: #020617; /* Slate 950 */
+  color: #e2e8f0;            /* Slate 200 */
+}
+
+.App {
+  text-align: left; /* Changed from center to let the dashboard align correctly */
+}
+
+/* Custom scrollbar for that "Hacker" look in the alert feed */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
