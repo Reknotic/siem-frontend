@@ -4,7 +4,8 @@ import {
   LoaderCircle, ShieldAlert, Activity, Database, Upload, Play, 
   Cpu, AlertTriangle, Search, Trash2, LayoutDashboard, 
   ListFilter, Globe, CheckCircle2, Terminal, User, Volume2, VolumeX, 
-  ArrowDown, CloudUpload, FileText, Settings as SettingsIcon, Power, PowerOff, Info, X 
+  ArrowDown, CloudUpload, FileText, Settings as SettingsIcon, Power, PowerOff, Info, X,
+  Menu
 } from 'lucide-react';
 
 const COLORS = ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#a855f7', '#00C49F'];
@@ -311,6 +312,7 @@ const Dashboard = ({ onLogout }) => {
 
   const [alerts, setAlerts] = useState([]);
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedFeatures, setSelectedFeatures] = useState([]);
 
   //const lastNotificationTime = useRef(Date.now());
@@ -894,11 +896,17 @@ const handleEngineChange = (e) => {
   if (loading) return <div className="h-screen bg-[#020617] flex items-center justify-center text-cyan-500 font-mono tracking-widest animate-pulse">SIEM_BOOT_SEQUENCE...</div>;
 
   return (
-    <div className="flex min-h-screen bg-[#020617] text-slate-200 font-mono">
-      
+    <div className="flex min-h-screen bg-[#020617] text-slate-200 font-mono relative">
+      {/* mobile hamburger icon */}
+      <button
+        className="md:hidden absolute top-4 left-4 text-slate-200 z-30"
+        onClick={() => setMobileMenuOpen(prev => !prev)}
+      >
+        <Menu size={24} />
+      </button>
+
       {/* Sidebar Navigation */}
-      <div className="w-72 h-screen sticky top-0 border-r border-slate-800 bg-[#070b14] flex flex-col overflow-hidden">
-        
+      <div className={`w-72 h-screen border-r border-slate-800 bg-[#070b14] flex flex-col overflow-hidden fixed z-20 transform transition-transform duration-200 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:sticky md:top-0 md:relative`}>        
         {/* Header Section (Static) */}
         <div className="p-6">
           <div className="flex items-center justify-between mb-10 px-2">
@@ -912,19 +920,19 @@ const handleEngineChange = (e) => {
 
         {/* Scrollable Navigation Area */}
         <div className="flex-1 overflow-y-auto px-6 space-y-2 custom-scrollbar">
-          <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase ${activeTab === 'dashboard' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('dashboard'); if(mobileMenuOpen) setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase ${activeTab === 'dashboard' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
             <LayoutDashboard size={16} /> Dashboard
           </button>
-          <button onClick={() => setActiveTab('stream')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase ${activeTab === 'stream' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('stream'); if(mobileMenuOpen) setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase ${activeTab === 'stream' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
             <ListFilter size={16} /> Incident Feed
           </button>
-          <button onClick={() => setActiveTab('ai')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase ${activeTab === 'ai' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('ai'); if(mobileMenuOpen) setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase ${activeTab === 'ai' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
             <Cpu size={16} /> AI Lab
           </button>
-          <button onClick={() => setActiveTab('intel')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase ${activeTab === 'intel' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('intel'); if(mobileMenuOpen) setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase ${activeTab === 'intel' ? 'bg-cyan-500 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
             <Globe size={16} /> Threat Intel
           </button>
-          <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase mt-4 ${activeTab === 'settings' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
+          <button onClick={() => { setActiveTab('settings'); if(mobileMenuOpen) setMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[11px] font-bold transition-all tracking-widest uppercase mt-4 ${activeTab === 'settings' ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800'}`}>
             <SettingsIcon size={16} /> System Settings
           </button>
         </div>
@@ -944,7 +952,7 @@ const handleEngineChange = (e) => {
         </div>
 </div>
 
-      <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 p-4 md:p-8 overflow-y-auto">
         {/* TAB: MAIN DASHBOARD */}
         {activeTab === 'dashboard' && (
           <div className="space-y-8 animate-in fade-in">
@@ -1203,12 +1211,12 @@ const handleEngineChange = (e) => {
       
     <div className={`${cardStyle} h-[calc(100vh-280px)] flex flex-col overflow-hidden`}>
       {/* HEADER: Balanced 12-col grid (2-4-2-2-2) */}
-      <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-[#1e293b]/50 border-b border-slate-800 text-[9px] font-black text-slate-500 uppercase tracking-widest">
-        <div className="col-span-2">Severity</div>
-        <div className="col-span-4">Threat Details</div>
-        <div className="col-span-2">Status Manager</div>
-        <div className="col-span-2">Security Action</div>
-        <div className="col-span-2 text-right">Origin/Time</div>
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-3 bg-[#1e293b]/50 border-b border-slate-800 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+        <div className="md:col-span-2">Severity</div>
+        <div className="md:col-span-4">Threat Details</div>
+        <div className="md:col-span-2">Status Manager</div>
+        <div className="md:col-span-2">Security Action</div>
+        <div className="md:col-span-2 text-right">Origin/Time</div>
       </div>
 
       <div onScroll={handleScrollDetection} className="overflow-y-auto flex-1 p-4 space-y-1 custom-scrollbar bg-[#020617]/20">
@@ -1221,24 +1229,27 @@ const handleEngineChange = (e) => {
             const isBlocked = intelDb[a.source_ip]?.status === "Blocked";
 
             return (
-              <div key={ticketId} className={`grid grid-cols-12 gap-4 items-center p-3 rounded-lg border border-transparent hover:border-slate-700 hover:bg-[#1e293b]/30 transition-all group ${a.severity === 'Critical' ? 'bg-red-500/5' : ''}`}>
+              <div key={ticketId} className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-3 rounded-lg border border-transparent hover:border-slate-700 hover:bg-[#1e293b]/30 transition-all group ${a.severity === 'Critical' ? 'bg-red-500/5' : ''}`}>
                 
                 {/* Full Severity Column */}
-                <div className="col-span-2">
+                <div className="md:col-span-2">
                    <div className={`w-full text-center py-1 rounded text-[9px] font-black uppercase border ${a.severity === 'Critical' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 'bg-orange-500/10 text-orange-500 border-orange-500/20'}`}>
+                    <span className="md:hidden block text-[8px] text-slate-500 mb-1">Severity</span>
                     {a.severity}
                   </div>
                 </div>
 
                 {/* Threat Details */}
-                <div className="col-span-4 overflow-hidden">
+                <div className="md:col-span-4 overflow-hidden">
+                  <span className="md:hidden block text-[8px] text-slate-500 mb-1">Details</span>
                   <p className="text-xs font-bold text-slate-200 group-hover:text-cyan-400 transition-colors truncate">{a.alert_type}</p>
                   <p className="text-[10px] text-slate-500 font-mono truncate">{a.description}</p>
                 </div>
 
                 {/* Status Dropdown */}
-                <div className="col-span-2">
-                  <select 
+                <div className="md:col-span-2">
+                  <span className="md:hidden block text-[8px] text-slate-500 mb-1">Status</span>
+                  <select
                     value={currentStatus} 
                     onChange={(e) => updateTicketStatus(ticketId, e.target.value)} 
                     className={`bg-[#020617] text-[9px] font-bold border rounded px-2 py-1.5 outline-none cursor-pointer w-full ${currentStatus === 'Resolved' ? 'border-emerald-500/30 text-emerald-500' : currentStatus === 'In Progress' ? 'border-blue-500/30 text-blue-400' : 'border-slate-800 text-slate-400'}`}
@@ -1250,7 +1261,8 @@ const handleEngineChange = (e) => {
                 </div>
 
                 {/* Block IP Action */}
-                <div className="col-span-2">
+                <div className="md:col-span-2">
+                  <span className="md:hidden block text-[8px] text-slate-500 mb-1">Action</span>
                   <button 
                     disabled={isBlocked}
                     onClick={() => requestBlockConfirm(a.source_ip)}
@@ -1266,7 +1278,8 @@ const handleEngineChange = (e) => {
                 </div>
 
                 {/* IP and Timestamp */}
-                <div className="col-span-2 text-right">
+                <div className="md:col-span-2 text-right">
+                  <span className="md:hidden block text-[8px] text-slate-500 mb-1">Origin/Time</span>
                   {(() => {
                     // 1. Resolve Intelligence Data from the local state
                     const storedIntel = intelDb[a.source_ip];
