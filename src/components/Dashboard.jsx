@@ -100,6 +100,15 @@ const Login = ({ onLoginSuccess }) => {
   const handleRegister = async () => {
     if (!username || !password || !regData.answer) return addLoginAlert("All fields required", "danger");
 
+    // enforce minimum length 8, at least one uppercase letter and one number
+    const pwdRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!pwdRegex.test(password)) {
+      return addLoginAlert(
+        "Password must be at least 8 characters long and include an uppercase letter and a number",
+        "danger"
+      );
+    }
+
     const res = await fetch("https://hussain-2003-siem-backend-v2.hf.space/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -533,11 +542,11 @@ const clearHistory = async () => {
 
 // --- addAlert function ---
   const addAlert = (msg, type = 'info') => {
-  const id = Date.now();
-  // Add the new alert to the array
-  setAlerts(prev => [...prev, { id, msg, type }]);
+  // Adding Math.random() ensures IDs are unique even if they arrive at the same millisecond
+  const id = Date.now() + Math.random(); 
   
-  // Automatically remove it after 5 seconds
+  setAlerts(prev => [...prev, { id, msg, type }].slice(-5));
+  
   setTimeout(() => {
     setAlerts(prev => prev.filter(alert => alert.id !== id));
   }, 5000);
@@ -1733,8 +1742,20 @@ const handleEngineChange = (e) => {
           <button 
             onClick={async () => {
               if (!newUsername && !newPassword) {
-                alert("Please enter a new username or password.");
+                addAlert("Please enter a new username or password.", "danger");
                 return;
+              }
+
+              // If password is being changed, enforce same complexity rules
+              if (newPassword) {
+                const pwdRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+                if (!pwdRegex.test(newPassword)) {
+                  addAlert(
+                    "Password must be at least 8 characters long and include an uppercase letter and a number.",
+                    "danger"
+                  );
+                  return;
+                }
               }
 
               try {
@@ -1748,11 +1769,11 @@ const handleEngineChange = (e) => {
                 });
 
                 if (response.ok) {
-                  alert("Credentials updated successfully. Please log in again.");
+                  addAlert("Credentials updated successfully. Please log in again.", "success");
                   onLogout(); // This clears the local session and kicks them to login
                 } else {
                   const error = await response.json();
-                  alert(`Update Failed: ${error.detail}`);
+                  addAlert(`Update Failed: ${error.detail}`, "danger");
                 }
               } catch (err) {
                 alert("Network error. Is the backend running?");
