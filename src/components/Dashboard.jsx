@@ -1144,7 +1144,7 @@ const handleEngineChange = (e) => {
             <div className="bg-black border border-slate-800 rounded-lg overflow-hidden shadow-2xl relative">
               <div className="bg-slate-900 px-4 py-2 border-b border-slate-800 flex justify-between items-center">
                 <div className="flex items-center gap-2 text-[9px] text-slate-500 font-bold tracking-widest uppercase">
-                  <Terminal size={10} /> Raw_Packet_Stream // TTY1
+                  <Terminal size={10} /> Raw_Packet_Stream /
                   <div className="flex items-center gap-1.5 ml-4 bg-black/40 px-2 py-0.5 rounded-full border border-slate-800">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
                     <span className="text-emerald-500/80 text-[8px]">LIVE_INGRESS</span>
