@@ -1151,14 +1151,25 @@ const handleEngineChange = (e) => {
                   </div>
                 </div>
               </div>
-              <div id="terminal" onScroll={handleScrollDetection} className="p-4 h-48 overflow-y-auto font-mono text-[10px] space-y-1 bg-[#020617] scroll-smooth custom-scrollbar">
+              <div id="terminal" onScroll={handleScrollDetection} className="p-4 h-48 overflow-y-auto overflow-x-auto font-mono text-[10px] space-y-1 bg-[#020617] scroll-smooth custom-scrollbar whitespace-nowrap">
                 {recentAlerts.length === 0 ? (
                   <p className="text-slate-700 animate-pulse">_WAITING_FOR_INGRESS...</p>
                 ) : (
                   chronoSortedLogs.map((log, i) => (
                     <div key={i} className="flex gap-4 border-b border-slate-900/50 pb-1 hover:bg-slate-900/30">
                       <span className="text-emerald-500">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                      <span className="text-slate-400 truncate">{JSON.stringify(log)}</span>
+                      <div className="flex gap-2 flex-wrap">
+                        {log.packet_size != null && (
+                          <span className="text-slate-400 text-xs">pkt:{log.packet_size}</span>
+                        )}
+                        {log.requests_sec != null && (
+                          <span className="text-slate-400 text-xs">rps:{log.requests_sec}</span>
+                        )}
+                        {log.flow_duration != null && (
+                          <span className="text-slate-400 text-xs">dur:{log.flow_duration.toFixed ? log.flow_duration.toFixed(0) : log.flow_duration}</span>
+                        )}
+                        <span className="text-slate-400 whitespace-nowrap">{JSON.stringify(log)}</span>
+                      </div>
                     </div>
                   ))
                 )}
