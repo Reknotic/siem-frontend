@@ -258,6 +258,82 @@ const Dashboard = ({ onLogout }) => {
   // ==========================================
   // 1. STATE & CONFIGURATION
   // ==========================================
+
+  // detect if the app is running inside Electron (renderer process)
+  const isElectron = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron');
+
+  // helper to convert Blob -> base64 string (without data: prefix)
+  const blobToBase64 = (blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result || '';
+      const parts = dataUrl.split(',');
+      resolve(parts[1] || '');
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
+  // save the model and encoder files locally using Electron IPC
+  const saveModelLocally = async (engineId) => {
+    if (!isElectron) return;
+    try {
+      const baseUrl = "https://hussain-2003-siem-backend-v2.hf.space";
+      const modelUrl = `${baseUrl}/static/${engineId}_model.pkl`;
+      const encUrl = `${baseUrl}/static/${engineId}_encoder.pkl`;
+      const [mRes, eRes] = await Promise.all([fetch(modelUrl), fetch(encUrl)]);
+      if (mRes.ok && eRes.ok) {
+        const mBlob = await mRes.blob();
+        const eBlob = await eRes.blob();
+        const mBase = await blobToBase64(mBlob);
+        const eBase = await blobToBase64(eBlob);
+        await window.electron.saveFile(`${engineId}_model.pkl`, mBase);
+        await window.electron.saveFile(`${engineId}_encoder.pkl`, eBase);
+      }
+    } catch (err) {
+      console.error("Local model save failed", err);
+    }
+  };
+
+  // save confusion matrix image locally (base64 encode)
+  const saveMatrixLocally = async (matrixUrl) => {
+    if (!isElectron || !matrixUrl) return;
+    try {
+      const resp = await fetch(matrixUrl);
+      if (!resp.ok) return;
+      const blob = await resp.blob();
+      const base64 = await blobToBase64(blob);
+      const fileName = matrixUrl.split('/').pop().split('?')[0];
+      await window.electron.saveFile(fileName, base64);
+    } catch (err) {
+      console.error("Local matrix save failed", err);
+    }
+  };
+
+  // attempt to load a saved matrix from disk, return data URL or null
+  const loadLocalMatrix = async (matrixUrl) => {
+    if (!isElectron || !matrixUrl) return null;
+    const fileName = matrixUrl.split('/').pop().split('?')[0];
+    try {
+      const data = await window.electron.loadFile(fileName);
+      if (data) return `data:image/png;base64,${data}`;
+    } catch (err) {
+      console.error("Local matrix load failed", err);
+    }
+    return null;
+  };
+
+  // try to load a model file from disk (base64); this is mainly used for debugging/logging
+  const loadLocalModel = async (engineId) => {
+    if (!isElectron) return null;
+    try {
+      const data = await window.electron.loadFile(`${engineId}_model.pkl`);
+      return data; // base64 string or null
+    } catch (err) {
+      console.error("Local model load failed", err);
+      return null;
+    }
+  };
   const [activeTab, setActiveTab] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total_logs: 0, threats_today: 0, system_status: "Operational", ai_accuracy: "N/A" });
@@ -482,6 +558,14 @@ const handleUnblock = async (ip) => {
 const handleActivateModel = async (engineId) => {
     setSelectedEngine(engineId); 
 
+    if (isElectron) {
+      // show if we have a local copy for debugging/information
+      const localData = await loadLocalModel(engineId);
+      if (localData) {
+        console.log(`Electron: local model for ${engineId} is present (${localData.length} bytes base64)`);
+      }
+    }
+
     try {
         const res = await fetch(`https://hussain-2003-siem-backend-v2.hf.space/models/${engineId}/activate`, {
             method: "POST"
@@ -636,7 +720,8 @@ const fetchData = useCallback(async () => {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000);
+    const delay = 10000; // poll every 10s (Electron and web share same faster interval)
+    const interval = setInterval(fetchData, delay);
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -676,11 +761,21 @@ const fetchData = useCallback(async () => {
 
       // ONLY update the image if we aren't "Locked" into a Recall view
       if (!isManualView) {
-        const finalPath = active.confusion_matrix.startsWith('data:') || active.confusion_matrix.startsWith('http')
+        const backendPath = active.confusion_matrix.startsWith('data:') || active.confusion_matrix.startsWith('http')
           ? active.confusion_matrix
           : `https://hussain-2003-siem-backend-v2.hf.space${active.confusion_matrix}`;
-          
-        setMatrixUrl(finalPath);
+
+        if (isElectron) {
+          // try local first and fall back to backend
+          const local = await loadLocalMatrix(backendPath);
+          if (local) {
+            setMatrixUrl(local);
+          } else {
+            setMatrixUrl(backendPath);
+          }
+        } else {
+          setMatrixUrl(backendPath);
+        }
         setSelectedFeatures(active.top_features || []);
       }
     }
@@ -690,7 +785,7 @@ const fetchData = useCallback(async () => {
 useEffect(() => {
     fetchHistory(false); // Initial load
     
-    const interval = setInterval(() => fetchHistory(true), 30000); // Auto-refresh
+    const interval = setInterval(() => fetchHistory(true), 10000); // Auto-refresh every 10s
     return () => clearInterval(interval);
 }, [fetchHistory]);
 
@@ -819,7 +914,16 @@ const handleEngineChange = (e) => {
             ? progData.matrix_url 
             : `https://hussain-2003-siem-backend-v2.hf.space${progData.matrix_url}`;
           
-          setMatrixUrl(`${fullPath}?t=${Date.now()}`);
+          const finalMatrixUrl = `${fullPath}?t=${Date.now()}`;
+
+          // if we're running inside electron try to save model+matrix locally
+          if (isElectron) {
+            // kick off saves but don't block UI
+            saveModelLocally(selectedEngine);
+            saveMatrixLocally(finalMatrixUrl);
+          }
+
+          setMatrixUrl(finalMatrixUrl);
 
           // --- NEW LOGIC: AUTOMATICALLY UPDATE FEATURES ---
           // This ensures the bars update immediately without clicking recall
@@ -1411,20 +1515,20 @@ const handleEngineChange = (e) => {
                         Performance Metrics (Confusion Matrix)
                       </h3>
                     </div>
-                    <div className="flex justify-center p-8 bg-[#020617]">
+                    <div className="flex flex-col items-center justify-center p-8 bg-[#020617]">
                       {matrixUrl ? (
-                        <img 
-                          src={
-                            matrixUrl.startsWith('data:') || matrixUrl.startsWith('http') 
-                              ? matrixUrl 
-                              : `https://hussain-2003-siem-backend-v2.hf.space${matrixUrl}`
-                          } 
-                          alt="Performance Matrix" 
-                          className="max-h-80 rounded border border-slate-800 shadow-2xl" 
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
+                          <img 
+                            src={
+                              matrixUrl.startsWith('data:') || matrixUrl.startsWith('http') 
+                                ? matrixUrl 
+                                : `https://hussain-2003-siem-backend-v2.hf.space${matrixUrl}`
+                            } 
+                            alt="Performance Matrix" 
+                            className="max-h-80 rounded border border-slate-800 shadow-2xl" 
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
                       ) : (
                         <p className="text-slate-600 text-xs italic">Select a history entry to view matrix</p>
                       )}
@@ -1521,16 +1625,30 @@ const handleEngineChange = (e) => {
                               {(log.accuracy * 100).toFixed(2)}%
                             </span>
                           </td>
-                          <td className="p-4 text-right">
+                          <td className="p-4 text-right space-x-4">
                             <button 
-                              onClick={() => {
+                              onClick={async () => {
                                 setIsManualView(true);
-                                setMatrixUrl(log.confusion_matrix);
+                                const cmPath = log.confusion_matrix;
+                                // if electron try local first
+                                if (isElectron) {
+                                  const local = await loadLocalMatrix(cmPath);
+                                  if (local) {
+                                    setMatrixUrl(local);
+                                  } else {
+                                    const backendUrl = cmPath.startsWith('http') ? cmPath : `https://hussain-2003-siem-backend-v2.hf.space${cmPath}`;
+                                    setMatrixUrl(backendUrl);
+                                  }
+                                } else {
+                                  const backendUrl = cmPath.startsWith('http') ? cmPath : `https://hussain-2003-siem-backend-v2.hf.space${cmPath}`;
+                                  setMatrixUrl(backendUrl);
+                                }
                                 setSelectedFeatures(log.top_features || []); // Set the features for the selected model
                               }}
                               className="text-[10px] font-black text-cyan-500 hover:text-white transition-colors">
                               RECALL_MATRIX
                             </button>
+
                           </td>
                         </tr>
                       ))}

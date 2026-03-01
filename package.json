@@ -2,6 +2,7 @@
   "name": "siem-dashboard",
   "version": "0.1.0",
   "private": true,
+  "main": "electron-main.js",
   "dependencies": {
     "@shadcn/ui": "^0.0.4",
     "@testing-library/dom": "^10.4.0",
@@ -19,6 +20,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "electron-dev": "concurrently \"react-scripts start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron": "npm run build && electron .",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -43,6 +46,9 @@
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "concurrently": "^8.1.0",
+    "wait-on": "^7.0.1",
+    "electron": "^26.2.4"
   }
 }
