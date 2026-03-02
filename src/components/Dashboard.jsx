@@ -1164,79 +1164,127 @@ const handleEngineChange = (e) => {
       };
       
       return (
-        <div key={i} className="flex items-center justify-between bg-[#1e293b]/10 p-3 rounded mb-2 border border-slate-800/40 hover:border-slate-600 transition-colors shrink-0">
-          <div className="flex items-center gap-4">
-            <div className={`w-1.5 h-1.5 rounded-full ${a.severity === 'Critical' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)] animate-pulse' : 'bg-orange-500'}`} />
-            
-            <div>
-              <div className="flex items-center gap-2">
-                <p className={`text-[10px] font-bold uppercase ${a.ai_detected ? 'text-purple-400' : 'text-cyan-500'}`}>
-                  {a.alert_type}
-                </p>
+  <div
+    key={i}
+    className="
+      flex flex-col gap-3
+      bg-[#1e293b]/10
+      p-3
+      rounded
+      mb-2
+      border border-slate-800/40
+      hover:border-slate-600
+      transition-colors
+      shrink-0
+    "
+  >
+    {/* ================= LEFT SECTION ================= */}
+    <div className="flex gap-3 items-start">
 
-                {a.ai_detected && (
-                  <span className="flex items-center gap-1 bg-purple-500/10 text-purple-400 text-[8px] font-black px-1.5 py-0.5 rounded-full border border-purple-500/30 animate-pulse">
-                    <Cpu size={10} /> AI SUGGESTED
-                  </span>
-                )}
+      <div
+        className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+          a.severity === "Critical"
+            ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)] animate-pulse"
+            : "bg-orange-500"
+        }`}
+      />
 
-                {/* GEO-IP ORIGIN TAG */}
-                
-                  <span className="flex items-center gap-1 text-[8px] text-slate-500 bg-slate-800/40 px-1.5 py-0.5 rounded border border-slate-700">
-                  <Globe size={8} /> 
-                  {/* Use the 'intel' object we created earlier because it handles the logic for you */}
-                  {intel.origin}
-                </span>
-              </div>
-              
-              {/* CLEANED DESCRIPTION: Splits at "Origin:" and takes only the first part */}
-              <p className="text-xs text-slate-400">
-                {a.description?.split(/origin:/i)[0].trim()}
-              </p>
-            </div>
-          </div>
+      <div className="flex flex-col gap-1 w-full min-w-0">
 
-          <div className="flex items-center gap-4">
-            {/* INTEL STATUS BADGE */}
-            {intel.status === 'Blocked' && (
-              <span className="text-[8px] font-black bg-red-500/10 text-red-500 px-2 py-1 rounded border border-red-500/20 uppercase tracking-widest">
-                Blocked
-              </span>
-            )}
+        {/* HEADER BADGES */}
+        <div className="flex flex-wrap items-center gap-2">
 
-            {/* BLOCK BUTTON */}
-            <button 
-              onClick={() => requestBlockConfirm(a.source_ip)}
-              className={`p-2 rounded-lg transition-all group border ${
-                intel.status === 'Blocked' 
-                ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed' 
-                : 'bg-red-500/5 hover:bg-red-500/20 text-red-500/40 hover:text-red-500 border-red-500/10 hover:border-red-500/50'
-              }`}
-              title={intel.status === 'Blocked' ? "IP Already Blocked" : "Block IP in Windows Firewall"}
-              disabled={intel.status === 'Blocked'}
-            >
-              <ShieldAlert size={14} className={intel.status !== 'Blocked' ? "group-hover:scale-110 transition-transform" : ""} />
-            </button>
+          <p
+            className={`text-xs sm:text-[10px] font-bold uppercase ${
+              a.ai_detected ? "text-purple-400" : "text-cyan-500"
+            }`}
+          >
+            {a.alert_type}
+          </p>
 
-            {/* CLICKABLE IP ADDRESS & TIMESTAMP */}
-            <button 
-              onClick={() => {
-                addAlert(`INTEL_REPORT: ${a.source_ip} | Origin: ${intel.origin || 'Local Network'}  | Actor: ${intel.actor || 'Unknown'} | Status: ${intel.status}`, "info");
-              }}
-              className="text-right group"
-              title="Click for Intelligence Report"
-            >
-              <p className={`text-xs font-mono mb-0.5 flex items-center justify-end gap-1 transition-colors underline-offset-4 decoration-dotted group-hover:underline ${intel.status === 'Blocked' ? 'text-red-400' : 'text-cyan-600 group-hover:text-cyan-400'}`}>
-                {a.source_ip}
-                <Info size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-              </p>
-              <p className="text-[9px] text-slate-500">
-                {new Date(a.timestamp).toLocaleTimeString()}
-              </p>
-            </button>
-          </div>
+          {a.ai_detected && (
+            <span className="flex items-center gap-1 bg-purple-500/10 text-purple-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-purple-500/30">
+              <Cpu size={10} /> AI
+            </span>
+          )}
+
+          <span className="flex items-center gap-1 text-[9px] text-slate-400 bg-slate-800/40 px-2 py-0.5 rounded border border-slate-700">
+            <Globe size={10} />
+            {intel.origin}
+          </span>
         </div>
-      );
+
+        {/* DESCRIPTION */}
+        <p className="text-xs text-slate-400 break-words">
+          {a.description?.split(/origin:/i)[0].trim()}
+        </p>
+      </div>
+    </div>
+
+    {/* ================= RIGHT SECTION ================= */}
+    <div className="
+      flex flex-wrap
+      items-center
+      justify-between
+      gap-2
+      pt-2
+      border-t border-slate-800/40
+    ">
+
+      {/* STATUS */}
+      <div className="flex items-center gap-2 flex-wrap">
+
+        {intel.status === "Blocked" && (
+          <span className="text-[9px] font-black bg-red-500/10 text-red-500 px-2 py-1 rounded border border-red-500/20 uppercase tracking-widest">
+            Blocked
+          </span>
+        )}
+
+        <button
+          onClick={() => requestBlockConfirm(a.source_ip)}
+          disabled={intel.status === "Blocked"}
+          className={`p-2 rounded-lg transition-all border ${
+            intel.status === "Blocked"
+              ? "bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed"
+              : "bg-red-500/5 hover:bg-red-500/20 text-red-500 border-red-500/20"
+          }`}
+        >
+          <ShieldAlert size={14} />
+        </button>
+      </div>
+
+      {/* IP + TIME */}
+      <button
+        onClick={() =>
+          addAlert(
+            `INTEL_REPORT: ${a.source_ip} | Origin: ${
+              intel.origin || "Local Network"
+            } | Actor: ${intel.actor || "Unknown"} | Status: ${
+              intel.status
+            }`,
+            "info"
+          )
+        }
+        className="text-right group min-w-0"
+      >
+        <p
+          className={`text-xs font-mono flex items-center justify-end gap-1 break-all ${
+            intel.status === "Blocked"
+              ? "text-red-400"
+              : "text-cyan-500 group-hover:text-cyan-400"
+          }`}
+        >
+          {a.source_ip}
+          <Info size={10} className="opacity-60" />
+        </p>
+
+        <p className="text-[10px] text-slate-500">
+          {new Date(a.timestamp).toLocaleTimeString()}
+        </p>
+      </button>
+    </div>
+  </div>
+);
     })
   )}
 
@@ -1289,40 +1337,87 @@ const handleEngineChange = (e) => {
   <div className="space-y-6 animate-in fade-in">
     {/* SEARCH & FILTERS HEADER */}
     <div className="flex flex-wrap justify-between items-center bg-[#0f172a] p-4 rounded-xl border border-slate-800 gap-4">
-      <div className="flex items-center gap-4">
-        <div className="flex bg-[#020617] items-center px-3 py-2 rounded-md border border-slate-700 w-64 focus-within:border-cyan-500 transition-colors">
-          <Search className="w-4 h-4 text-slate-500 mr-2" />
-          <input type="text" placeholder="Search by IP or Attack Type..." className="bg-transparent text-xs outline-none w-full text-slate-200" onChange={e => setSearchTerm(e.target.value)} />
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <select className="bg-[#020617] text-[10px] font-bold text-slate-400 border border-slate-700 rounded px-2 py-2 uppercase outline-none focus:border-cyan-500" onChange={(e) => setSeverityFilter(e.target.value)}>
-            <option value="All">All Severities</option>
-            <option value="High">High Severity</option>
-            <option value="Critical">Critical Only</option>
-          </select>
+  {/* Left Section: Search + Filters + Stats */}
+  <div className="flex flex-wrap items-center gap-4">
+    
+    {/* Search Box */}
+    <div className="flex items-center bg-[#020617] px-3 py-2 rounded-md border border-slate-700 w-64 focus-within:border-cyan-500 transition-colors">
+      <Search className="w-4 h-4 text-slate-500 mr-2" />
+      <input
+        type="text"
+        placeholder="Search by IP or Attack Type..."
+        className="bg-transparent text-xs outline-none w-full text-slate-200 placeholder:text-slate-500"
+        onChange={e => setSearchTerm(e.target.value)}
+      />
+    </div>
 
-          <select className="bg-[#020617] text-[10px] font-bold text-slate-400 border border-slate-700 rounded px-2 py-2 uppercase outline-none focus:border-cyan-500" onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="All">All Status</option>
-            <option value="Open">Open</option>
-            <option value="In Progress">Investigating</option>
-            <option value="Resolved">Resolved</option>
-          </select>
-        </div>
+    {/* Filters */}
+    <div className="flex flex-wrap items-center gap-2">
+      <select
+        className="bg-[#020617] text-[10px] font-bold text-slate-400 border border-slate-700 rounded px-2 py-2 uppercase outline-none focus:border-cyan-500 transition-colors"
+        onChange={e => setSeverityFilter(e.target.value)}
+      >
+        <option value="All">All Severities</option>
+        <option value="High">High Severity</option>
+        <option value="Critical">Critical Only</option>
+      </select>
 
-        <div className="h-8 w-px bg-slate-800 mx-2" />
-        <div className="flex flex-col">
-          <span className="text-[8px] text-slate-500 uppercase font-black tracking-tighter">Live Database Index</span>
-          <span className="text-xs font-bold text-cyan-500">{filteredAlerts.length} of {stats.total_logs} Logs</span>
-        </div>
-      </div>
+      <select
+        className="bg-[#020617] text-[10px] font-bold text-slate-400 border border-slate-700 rounded px-2 py-2 uppercase outline-none focus:border-cyan-500 transition-colors"
+        onChange={e => setStatusFilter(e.target.value)}
+      >
+        <option value="All">All Status</option>
+        <option value="Open">Open</option>
+        <option value="In Progress">Investigating</option>
+        <option value="Resolved">Resolved</option>
+      </select>
+    </div>
 
-      <div className="flex gap-2">
-        {syncing && <div className="flex items-center gap-2 px-3 text-cyan-500 animate-pulse border border-cyan-500/20 rounded-lg bg-cyan-500/5"><CloudUpload size={12} /><span className="text-[8px] font-bold uppercase tracking-widest">Saving</span></div>}
-        <button onClick={() => window.open("https://hussain-2003-siem-backend-v2.hf.space/generate-report", "_blank")} className="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 text-[10px] font-bold rounded uppercase flex items-center gap-2 border border-indigo-500/30 transition-all shadow-[0_0_15px_rgba(99,102,241,0.1)]"><FileText size={14} /> Report</button>
-        <button onClick={async () => { const res = await fetch("https://hussain-2003-siem-backend-v2.hf.space/export-logs"); const data = await res.json(); window.open(`https://hussain-2003-siem-backend-v2.hf.space${data.download_url}`); }} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-[10px] font-bold rounded uppercase flex items-center gap-2 border border-slate-700 transition-colors"><Database size={14} /> Export</button>
+    {/* Divider + Stats */}
+    <div className="flex items-center gap-2">
+      <div className="h-8 w-px bg-slate-800" />
+      <div className="flex flex-col">
+        <span className="text-[8px] text-slate-500 uppercase font-black tracking-tighter">
+          Live Database Index
+        </span>
+        <span className="text-xs font-bold text-cyan-500">
+          {filteredAlerts.length} of {stats.total_logs} Logs
+        </span>
       </div>
     </div>
+  </div>
+
+  {/* Right Section: Buttons */}
+  <div className="flex flex-wrap gap-2">
+    {/* Syncing Indicator */}
+    {syncing && (
+      <div className="flex items-center gap-2 px-3 py-1 text-cyan-500 animate-pulse border border-cyan-500/20 rounded-lg bg-cyan-500/5">
+        <CloudUpload size={12} />
+        <span className="text-[8px] font-bold uppercase tracking-widest">Saving</span>
+      </div>
+    )}
+
+    {/* Report Button */}
+    <button
+      onClick={() => window.open("https://hussain-2003-siem-backend-v2.hf.space/generate-report", "_blank")}
+      className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase rounded border border-indigo-500/30 bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 transition-all shadow-[0_0_15px_rgba(99,102,241,0.1)]"
+    >
+      <FileText size={14} /> Report
+    </button>
+
+    {/* Export Button */}
+    <button
+      onClick={async () => {
+        const res = await fetch("https://hussain-2003-siem-backend-v2.hf.space/export-logs");
+        const data = await res.json();
+        window.open(`https://hussain-2003-siem-backend-v2.hf.space${data.download_url}`);
+      }}
+      className="flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 transition-colors"
+    >
+      <Database size={14} /> Export
+    </button>
+  </div>
+</div>
       
     <div className={`${cardStyle} h-[calc(100vh-280px)] flex flex-col overflow-hidden`}>
       {/* HEADER: Balanced 12-col grid (2-4-2-2-2) */}
